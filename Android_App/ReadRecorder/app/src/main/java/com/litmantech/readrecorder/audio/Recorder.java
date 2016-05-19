@@ -46,7 +46,8 @@ public class Recorder {
             public void run() {
                 android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
                 stopCollector = false;
-                CollectAudio();
+                CollectAudio();//this will block until stopCollector == true
+                collector = null;//if we are here that means we are done. so lets clean up
             }
         });
 
@@ -76,6 +77,20 @@ public class Recorder {
      */
     public void setAudioListener(LinkedBlockingQueue audioListener){
         this.audioListener = audioListener;
+
+    }
+
+    public void Stop() {
+        stopCollector = true;
+
+        if(collector != null) {
+            try {
+                collector.join();
+            } catch (InterruptedException e) {
+
+                //TODO
+            }
+        }
 
     }
 }
