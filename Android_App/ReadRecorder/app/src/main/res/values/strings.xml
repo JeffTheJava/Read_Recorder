@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Read Recorder</string>
+
+    <string name="sentence_lable">Current Sentence</string>
+
+    <string name="next_btn">Next Button</string>
+    <string name="previous_btn">Previous Button</string>
+
+    <string name="no_data">...</string>
+
+
 </resources>
