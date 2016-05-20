@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Recorder recorder;
     private Playback playback;
+    private boolean testAudioStuffON = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +33,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+
+
     }
+
 
     @Override
     protected void onResume(){
         super.onResume();
-        RunTest();
+        if(testAudioStuffON)
+            RunTest();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if(testAudioStuffON){
+            recorder.Stop();
+            playback.Stop();
+        }
     }
 
     private void RunTest() {
@@ -53,11 +68,5 @@ public class MainActivity extends AppCompatActivity {
         recorder.Start();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
 
-        recorder.Stop();
-        playback.Stop();
-    }
 }
