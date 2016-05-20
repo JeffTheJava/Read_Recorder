@@ -14,6 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private Recorder recorder;
     private Playback playback;
 
@@ -28,35 +29,35 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.RECORD_AUDIO},
                     55);
-
         }
 
 
     }
 
     @Override
-    protected void onStart(){
-        super.onStart();
+    protected void onResume(){
+        super.onResume();
         RunTest();
     }
 
     private void RunTest() {
+
         if(playback == null)
             playback = new Playback();
         if(recorder == null)
             recorder = new Recorder();
 
-        LinkedBlockingQueue audioListener  = playback.Play();
-        recorder.setAudioListener(audioListener);
+        LinkedBlockingQueue audioListener = playback.Play();
 
+        recorder.setAudioListener(audioListener);
         recorder.Start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
         recorder.Stop();
         playback.Stop();
-
     }
 }

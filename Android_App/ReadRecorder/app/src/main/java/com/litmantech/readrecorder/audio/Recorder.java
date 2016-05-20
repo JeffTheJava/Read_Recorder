@@ -4,6 +4,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Process;
+import android.util.Log;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -12,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Recorder {
 
+    private static final String TAG = "Recorder";
     private final AudioRecord audioRecord;
     private final int minBufSize;
     private final int sampleRate;
@@ -35,7 +37,7 @@ public class Recorder {
      * If start has already been called and it is already running then it will just keep running.
      */
     public void Start(){
-
+        Log.d(TAG,"Start called");
         if(collector!=null)
             return;//we are already running
 
@@ -47,6 +49,7 @@ public class Recorder {
                 android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
                 stopCollector = false;
                 CollectAudio();//this will block until stopCollector == true
+                audioRecord.stop();
                 collector = null;//if we are here that means we are done. so lets clean up
             }
         });
@@ -77,19 +80,20 @@ public class Recorder {
      */
     public void setAudioListener(LinkedBlockingQueue audioListener){
         this.audioListener = audioListener;
-
     }
 
+    /**
+     * will block your thread until stop is 100% done. if you get locked and want to get out just call interrupt(); on the thread
+     */
     public void Stop() {
         stopCollector = true;
 
         if(collector != null) {
             try {
+                collector.interrupt();
                 collector.join();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException e) {/*we will do nothing here. don't care if another thread interrupts this thread*/}
 
-                //TODO
-            }
         }
 
     }
