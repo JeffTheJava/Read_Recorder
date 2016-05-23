@@ -30,3 +30,5 @@ proguard/
 
 # Android Studio captures folder
 captures/
+/Android_App/ReadRecorder/.idea/vcs.xml
+/Android_App/ReadRecorder/.idea
