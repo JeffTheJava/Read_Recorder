@@ -66,7 +66,8 @@ public class Recorder {
             short[] tempHolder = new short[bufferReadResult];
 
             System.arraycopy(audioBuffer,0,tempHolder,0,bufferReadResult);//this will help clean out any old audio and remove 0 0 0 from the back end if audioRecord.read could not fill it up
-            audioListener.add(tempHolder);
+            if(audioListener!=null)
+                audioListener.add(tempHolder);//the collector might be running but no one wants any audio.
         }
     }
 

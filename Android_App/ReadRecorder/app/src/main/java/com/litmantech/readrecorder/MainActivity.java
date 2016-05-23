@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean testAudioStuffON = false;
     private Button prevBTN;
     private Button nextBTN;
+    private Button recBTN;
     private Session session;
     private TextView currentSentenceTXT;
 
@@ -43,9 +44,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         currentSentenceTXT = (TextView) findViewById(R.id.current_sentence);
         prevBTN = (Button) findViewById(R.id.prev_btn);
+        recBTN  = (Button) findViewById(R.id.rec_btn);
         nextBTN = (Button) findViewById(R.id.next_btn);
 
         prevBTN.setOnClickListener(this);
+        recBTN.setOnClickListener(this);
         nextBTN.setOnClickListener(this);
 
         String[] mTestArray = getResources().getStringArray(R.array.testArray);
@@ -59,6 +62,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
         if(testAudioStuffON)
             RunTest();
+
+        if(recorder == null)
+            recorder = new Recorder();
+
+        recorder.Start();
     }
 
     @Override
@@ -66,22 +74,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
 
         if(testAudioStuffON){
-            recorder.Stop();
             playback.Stop();
         }
+        recorder.Stop();
     }
 
     private void RunTest() {
 
         if(playback == null)
             playback = new Playback();
-        if(recorder == null)
-            recorder = new Recorder();
+
 
         LinkedBlockingQueue audioListener = playback.Play();
 
         recorder.setAudioListener(audioListener);
-        recorder.Start();
+
     }
 
 
@@ -91,13 +98,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             session.PreviousEntry();
         }else if(v == nextBTN){
             session.NextEntry();
+        }else if(v == recBTN){
+            if(session.isRecording())
+                session.StopRecording();
+            else
+                session.StartRecording(recorder);
         }
+
 
         UpdateUI();
     }
 
+    /**
+     * ONLY call this on the UI thread.!!!!
+     */
     private void UpdateUI() {
-        Entry entry = session.getCurrentEntry();
-        currentSentenceTXT.setText(entry.getSentence());
+        Entry currentEntry = session.getCurrentEntry();
+        if(session.isRecording()){
+            prevBTN.setEnabled(false);
+            nextBTN.setEnabled(false);
+        }else{
+            prevBTN.setEnabled(true);
+            nextBTN.setEnabled(true);
+        }
+
+        currentSentenceTXT.setText(currentEntry.getSentence());
     }
 }

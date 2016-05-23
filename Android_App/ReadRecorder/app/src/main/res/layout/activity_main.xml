@@ -37,6 +37,14 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/rec_btn"
+        android:id="@+id/rec_btn"
+        android:layout_above="@+id/prev_btn"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="@string/next_btn"
         android:id="@+id/next_btn"
         android:layout_alignParentBottom="true"

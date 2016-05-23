@@ -22,4 +22,9 @@ public class Entry {
     public String getSentence(){
         return sentence;
     }
+
+
+    public void SaveAudio(short[] audioBuff) {
+
+    }
 }

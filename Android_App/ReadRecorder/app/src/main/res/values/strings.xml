@@ -4,7 +4,10 @@
     <string name="sentence_lable">Current Sentence</string>
 
     <string name="next_btn">Next Button</string>
+    <string name="rec_btn">Record Button</string>
     <string name="previous_btn">Previous Button</string>
+
+
 
     <string name="no_data">...</string>
 

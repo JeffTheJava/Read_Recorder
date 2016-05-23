@@ -2,9 +2,11 @@ package com.litmantech.readrecorder.read;
 
 import android.util.Log;
 
+import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.read.line.Entry;
 
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Jeff_Dev_PC on 5/20/2016.
@@ -14,6 +16,8 @@ public class Session {
 
     private final ArrayList<Entry> entries;
     private Entry currentEntry;
+    private Thread audioCollectionThread = null;
+    private boolean stopCollectingAudio = false;
 
     /**
      * A session will hold all the data about the current data collection test.
@@ -30,6 +34,8 @@ public class Session {
             Entry entry = new Entry(sentence, uniqueID);
             entries.add(entry);
         }
+
+        audioCollectionThread = null;
 
         NextEntry();// go to the first Entry;
     }
@@ -86,5 +92,61 @@ public class Session {
      */
     public Entry getCurrentEntry(){
         return currentEntry;
+    }
+
+    public boolean isRecording() {
+        return audioCollectionThread !=null;// is the audio collector is running the we must be recording.
+    }
+
+    /**
+     * will start collect audio and giving it to the current entry. if it is already running nothing will happen
+     *StartRecording is not a blocking call it will return right away. that does not mean you have started yet.
+     * check isRecording to see if you have started yet.
+     * @param recorder the global recorder that will open and collect mic audio for us.
+     * @see #getCurrentEntry()
+     */
+    public void StartRecording(final Recorder recorder) {
+        if(audioCollectionThread != null)
+            return;
+
+        audioCollectionThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                stopCollectingAudio = false;
+                LinkedBlockingQueue<short[]> audioHolder = new LinkedBlockingQueue<short[]>();
+                recorder.setAudioListener(audioHolder);
+                CollectAudio(audioHolder);//this will block until you call #StopRecording()
+                audioCollectionThread = null;// if we got here then that mean we are ready to stop. null the thread so we can make a new one
+            }
+        }, "Audio Collection Thread in Session.java");
+
+        audioCollectionThread.start();
+    }
+
+    private void CollectAudio(LinkedBlockingQueue<short[]> audioHolder) {
+        while (!stopCollectingAudio){
+            try {
+                short[] audioBuff = audioHolder.take();
+                currentEntry.SaveAudio(audioBuff);
+
+            } catch (InterruptedException e) {
+                StopRecording();//if we got interrupted then we need to stop!!!
+            }
+        }
+    }
+
+    /**
+     * stop collect audio for the current event
+     * this call will lock your thread until stop is 100% done
+     */
+    public void StopRecording(){
+        stopCollectingAudio = true;
+        if(audioCollectionThread!=null){
+            audioCollectionThread.interrupt();
+            try {
+                audioCollectionThread.join();
+            } catch (InterruptedException e) {/*its ok for this thread to be interrupted i will do nothing here.*/}
+        }
+
     }
 }
