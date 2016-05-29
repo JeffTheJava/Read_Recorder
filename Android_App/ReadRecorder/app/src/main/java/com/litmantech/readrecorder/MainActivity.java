@@ -1,11 +1,15 @@
 package com.litmantech.readrecorder;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Session session;
     private TextView currentSentenceTXT;
     private EditText sessionDirNameETXT;
+    private Button openSessionBTN;
+    private Button newSessionBTN;
+    private TextView currentSessionLabelTXT;
+    private String m_Text;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,19 +54,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 55);
 
         currentSentenceTXT = (TextView) findViewById(R.id.current_sentence);
-        sessionDirNameETXT = (EditText) findViewById(R.id.sessionDirName);
+        currentSessionLabelTXT = (TextView) findViewById(R.id.session_dir_label);
         prevBTN = (Button) findViewById(R.id.prev_btn);
         recBTN  = (Button) findViewById(R.id.rec_btn);
         nextBTN = (Button) findViewById(R.id.next_btn);
+        newSessionBTN = (Button) findViewById(R.id.new_session_btn);
+        openSessionBTN = (Button) findViewById(R.id.open_session_btn);
+
+
 
         prevBTN.setOnClickListener(this);
         recBTN.setOnClickListener(this);
         nextBTN.setOnClickListener(this);
+        newSessionBTN.setOnClickListener(this);
+        openSessionBTN.setOnClickListener(this);
 
-        sessionDirNameETXT.setText(Session.DEFAULT_DIR_NAME);
 
         String[] mTestArray = getResources().getStringArray(R.array.testArray);
-        String sessionDirName = sessionDirNameETXT.getText().toString();
+        String sessionDirName = Session.DEFAULT_DIR_NAME;
         session = new Session(this,sessionDirName,mTestArray);
         UpdateUI();
     }
@@ -110,10 +123,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 session.StopRecording();
             else
                 session.StartRecording(recorder);
+        }else if(v == newSessionBTN){
+            ShowNewSessionDialog();
+
+        }else if(v == openSessionBTN){
+
         }
 
 
         UpdateUI();
+    }
+
+    private void ShowNewSessionDialog() {
+        final Context context = this;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Title");
+        builder.setMessage("This is a test");
+
+        final EditText input = new EditText(this);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                m_Text = input.getText().toString();
+                String[] mTestArray = getResources().getStringArray(R.array.testArray);
+                session = new Session(context,m_Text,mTestArray);
+                UpdateUI();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
     }
 
     /**
@@ -130,5 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         currentSentenceTXT.setText(currentEntry.getSentence());
+        currentSessionLabelTXT.setText("Session Name:"+session.getName());
+
     }
 }

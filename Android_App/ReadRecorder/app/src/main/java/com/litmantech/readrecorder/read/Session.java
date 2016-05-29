@@ -3,11 +3,15 @@ package com.litmantech.readrecorder.read;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
+import android.util.Log;
 
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.read.line.Entry;
+import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Session {
     private static final String TAG = "Session";
+    private static final String HIDDEN_FILE_NAME =".ReadRecorder.info";// that first dot makes this file hidden on android file system.
     public static final String DEFAULT_DIR_NAME = "Session1";
 
     private Context context;
@@ -24,6 +29,7 @@ public class Session {
     private Entry currentEntry;
     private Thread audioCollectionThread = null;
     private boolean stopCollectingAudio = false;
+    private final String sessionName;
 
     /**
      *  A session will hold all the data about the current data collection test.
@@ -35,28 +41,46 @@ public class Session {
      */
     public Session(Context context, String sessionDirName, String[] sentences) throws NullPointerException {
         this.context = context;
+        this.sessionName = sessionDirName;
         if (sentences == null || sentences.length == 0)
             throw new NullPointerException("Your sentences are NULL!!!!");
 
         String dataDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String currentSessionLocation = dataDirectory + "/" + sessionDirName;
+        String currentSessionLocation = dataDirectory + "/" + sessionName;
 
         sessionDir = new File(currentSessionLocation);
-        if (!sessionDir.exists())
+        if (!sessionDir.exists()) {
             sessionDir.mkdirs();
+        }
+        
+        CreateHiddenInfoFile(sessionDir);// create a hidden info file that we will use to know that this is a Read Recorder Dir. we will use this when the open session button is pressed
 
         MakeDirVisibleOverUSB(currentSessionLocation);
 
         entries = new ArrayList<Entry>();
         for (String sentence : sentences) {
             int uniqueID = entries.size();//so this is a cool trick. I don't want to i++ each loop (that's borrowing). Take a look at the loop. when it first starts, what is entries.size()? 0 right. then next loop what is it? 1. and so on..
-            Entry entry = new Entry(sentence, uniqueID, sessionDir);
+
+            Entry entry = new Entry(sentence, (uniqueID+1)/*make sure the ID starts at 1 not 0*/, sessionDir);
             entries.add(entry);
         }
 
         audioCollectionThread = null;
 
         NextEntry();// go to the first Entry;
+    }
+
+    private void CreateHiddenInfoFile(File sessionDir) {
+
+        String filename = HIDDEN_FILE_NAME;
+        File file = new File(sessionDir.getAbsolutePath(), filename);
+
+        String message = "!!Do not delete or rename this file!!\n\nWill have more data in this file soon. For now we use this file to prove this is a Read Recorder directory. If you delete this file then this folder will not show up when you click open session button ";
+        try {
+            UiUtil.SaveStringToFile(file,message);
+        } catch (IOException e) {
+            Log.d(TAG,"unable to save file:"+filename);
+        }
     }
 
 
@@ -183,7 +207,6 @@ public class Session {
     public void StopRecording() {
         stopCollectingAudio = true;
         if (audioCollectionThread != null) {
-            audioCollectionThread.interrupt();
             try {
                 audioCollectionThread.join();
             } catch (InterruptedException e) {/*its ok for this thread to be interrupted i will do nothing here.*/}
@@ -209,13 +232,17 @@ public class Session {
      * Make a file or/and a dir visible over USB
      * A way to make sure, if the user plugs the phone into a computer, they can see the files over USB.
      * If you dont need the call back then make onScanCompletedListener == null or call:
-     * @see #MakeDirVisibleOverUSB(String)
      *
      * @param absolutePath full path and/or file name of the folder or file you want to user to see over usb
+     * @see #MakeDirVisibleOverUSB(String)
      */
     public void MakeDirVisibleOverUSB(String absolutePath, MediaScannerConnection.OnScanCompletedListener onScanCompletedListener) {
         if (context != null) {
             MediaScannerConnection.scanFile(context, new String[]{absolutePath}, null, onScanCompletedListener);//I dont care if this works or not. thats why i pass null for the call back. so what is the usb works. dont care
         }
+    }
+
+    public String getName() {
+        return sessionName;
     }
 }
