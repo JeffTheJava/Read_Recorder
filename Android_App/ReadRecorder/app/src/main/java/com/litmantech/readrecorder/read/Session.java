@@ -139,6 +139,9 @@ public class Session {
                 LinkedBlockingQueue<short[]> audioHolder = new LinkedBlockingQueue<short[]>();
                 recorder.setAudioListener(audioHolder);
                 CollectAudio(audioHolder);//this will block until you call #StopRecording()
+                recorder.setAudioListener(null);//stop adding audio
+                DrainAudio(audioHolder);
+                currentEntry.close();//close the audio file on disk
                 audioCollectionThread = null;// if we got here then that mean we are ready to stop. null the thread so we can make a new one
             }
         }, "Audio Collection Thread in Session.java");
@@ -156,8 +159,21 @@ public class Session {
                 StopRecording();//if we got interrupted then we need to stop!!!
             }
         }
+    }
 
-        currentEntry.close();//close the audio file on disk
+    /**
+     * save the last little bit of audio that is left
+     */
+    private void DrainAudio(LinkedBlockingQueue<short[]> audioHolder) {
+        if(!audioHolder.isEmpty()){
+            short[] audioBuff = new short[0];
+            try {
+                audioBuff = audioHolder.take();
+                currentEntry.SaveAudio(audioBuff);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
