@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.litmantech.readrecorder.audio.Playback;
@@ -28,21 +29,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button recBTN;
     private Session session;
     private TextView currentSentenceTXT;
+    private EditText sessionDirNameETXT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this,  Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
 
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    55);
+
         }
 
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                55);
+
         currentSentenceTXT = (TextView) findViewById(R.id.current_sentence);
+        sessionDirNameETXT = (EditText) findViewById(R.id.sessionDirName);
         prevBTN = (Button) findViewById(R.id.prev_btn);
         recBTN  = (Button) findViewById(R.id.rec_btn);
         nextBTN = (Button) findViewById(R.id.next_btn);
@@ -51,8 +55,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         recBTN.setOnClickListener(this);
         nextBTN.setOnClickListener(this);
 
+        sessionDirNameETXT.setText(Session.DEFAULT_DIR_NAME);
+
         String[] mTestArray = getResources().getStringArray(R.array.testArray);
-        session = new Session(mTestArray);
+        String sessionDirName = sessionDirNameETXT.getText().toString();
+        session = new Session(this,sessionDirName,mTestArray);
         UpdateUI();
     }
 
