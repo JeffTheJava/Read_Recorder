@@ -55,13 +55,16 @@ public class Session {
         
         CreateHiddenInfoFile(sessionDir);// create a hidden info file that we will use to know that this is a Read Recorder Dir. we will use this when the open session button is pressed
 
-        MakeDirVisibleOverUSB(currentSessionLocation);
+        SaveSentencesToCurrentLocation(sentences);
+
+        //MakeDirVisibleOverUSB(sessionDir.toString());//having issues with one phone but works with 4 other phones i tested
 
         entries = new ArrayList<Entry>();
         for (String sentence : sentences) {
             int uniqueID = entries.size();//so this is a cool trick. I don't want to i++ each loop (that's borrowing). Take a look at the loop. when it first starts, what is entries.size()? 0 right. then next loop what is it? 1. and so on..
 
             Entry entry = new Entry(sentence, (uniqueID+1)/*make sure the ID starts at 1 not 0*/, sessionDir);
+            entry.setSession(this);
             entries.add(entry);
         }
 
@@ -70,14 +73,37 @@ public class Session {
         NextEntry();// go to the first Entry;
     }
 
+    private void SaveSentencesToCurrentLocation(String[] sentences) {
+
+        String filename = "List.txt";
+        File sessionTextFile = new File(sessionDir.getAbsolutePath(),filename);
+
+        StringBuilder builder = new StringBuilder();
+        for(String s : sentences) {
+            String endOfLineMarker = "\r\n";//This is because \n does not represent a full line break in Windows. Using \n is "the Unix" way of doing line breaks
+            String newLine = builder.length() != 0?endOfLineMarker:"";
+
+            builder.append(newLine);
+            builder.append(s);
+        }
+
+        String message = builder.toString();
+        try {
+            UiUtil.SaveStringToFile(sessionTextFile,message);
+            MakeDirVisibleOverUSB(sessionTextFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.d(TAG,"unable to save file:"+filename);
+        }
+    }
+
     private void CreateHiddenInfoFile(File sessionDir) {
 
         String filename = HIDDEN_FILE_NAME;
-        File file = new File(sessionDir.getAbsolutePath(), filename);
+        File hiddenFile = new File(sessionDir.getAbsolutePath(), filename);
 
         String message = "!!Do not delete or rename this file!!\n\nWill have more data in this file soon. For now we use this file to prove this is a Read Recorder directory. If you delete this file then this folder will not show up when you click open session button ";
         try {
-            UiUtil.SaveStringToFile(file,message);
+            UiUtil.SaveStringToFile(hiddenFile,message);
         } catch (IOException e) {
             Log.d(TAG,"unable to save file:"+filename);
         }

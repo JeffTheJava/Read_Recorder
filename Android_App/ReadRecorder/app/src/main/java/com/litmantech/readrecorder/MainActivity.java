@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -13,13 +14,16 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.litmantech.readrecorder.audio.Playback;
 import com.litmantech.readrecorder.audio.Recorder;
+import com.litmantech.readrecorder.fileexplore.FileBrowser;
 import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.read.line.Entry;
 
+import java.io.File;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button newSessionBTN;
     private TextView currentSessionLabelTXT;
     private String m_Text;
+    private FileBrowser fileBrowser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +66,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         newSessionBTN = (Button) findViewById(R.id.new_session_btn);
         openSessionBTN = (Button) findViewById(R.id.open_session_btn);
 
+        ListView listView = (ListView) findViewById(R.id.listview);
 
+
+        fileBrowser = new FileBrowser(this, listView, Environment.getExternalStorageDirectory());
+        fileBrowser.setOnFileSelected(new FileBrowser.OnFileSelectedListener() {
+            @Override
+            public void onFileSelected(File fileSelected) {
+                TextView selectedFileLabel = (TextView) findViewById(R.id.selected_file);
+                selectedFileLabel.setText(fileSelected.getName());
+
+            }
+
+            @Override
+            public void onFilesUnselected(File fileSelected) {
+                
+            }
+
+            @Override
+            public void onDirSelected(File dirSelected) {
+                TextView currentDirLabel = (TextView) findViewById(R.id.currentDir);
+                currentDirLabel.setText(dirSelected.getAbsolutePath());
+            }
+        });
+        fileBrowser.GoToRoot();
 
         prevBTN.setOnClickListener(this);
         recBTN.setOnClickListener(this);
@@ -178,5 +206,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentSentenceTXT.setText(currentEntry.getSentence());
         currentSessionLabelTXT.setText("Session Name:"+session.getName());
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        fileBrowser.GoBack();
     }
 }

@@ -2,6 +2,8 @@ package com.litmantech.readrecorder.read.line;
 
 import android.content.Context;
 
+import com.litmantech.readrecorder.read.Session;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -20,6 +22,7 @@ public class Entry {
     private static FileOutputStream outputStream;
     private final int uniqueID;
     private final File audioFile;
+    private Session session;
 
     public Entry(String sentence, int uniqueID, File sessionDir) {
         this.sentence = sentence;
@@ -71,10 +74,14 @@ public class Entry {
             outputStream.flush();
             outputStream.close();
             outputStream=null;
+            session.MakeDirVisibleOverUSB(audioFile.getAbsolutePath());
         } catch (IOException e) {
 
         }
     }
 
 
+    public void setSession(Session session) {
+        this.session = session;
+    }
 }
