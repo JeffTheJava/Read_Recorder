@@ -5,6 +5,8 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.util.Log;
 
+import com.litmantech.readrecorder.MainActivity;
+import com.litmantech.readrecorder.R;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.read.line.Entry;
 import com.litmantech.readrecorder.utilities.UiUtil;
@@ -13,6 +15,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -39,7 +42,7 @@ public class Session {
      * @param sentences each sentences that was in the text document. make sure you clean in it and make it nice a pretty before passing in.
      * @throws NullPointerException
      */
-    public Session(Context context, String sessionDirName, String[] sentences) throws NullPointerException {
+    public Session(Context context, String sessionDirName, String[] sentences) throws NullPointerException, SessionExistsException{
         this.context = context;
         this.sessionName = sessionDirName;
         if (sentences == null || sentences.length == 0)
@@ -51,6 +54,15 @@ public class Session {
         sessionDir = new File(currentSessionLocation);
         if (!sessionDir.exists()) {
             sessionDir.mkdirs();
+        }else{
+            String[] list = sessionDir.list();
+            if (list != null) {
+                for (String file : list) {
+                    if(file.trim().toUpperCase().contains(HIDDEN_FILE_NAME.trim().toUpperCase())){
+                        throw new SessionExistsException("Session Already exists Try a different name!", sessionDir);
+                    }
+                }
+            }
         }
         
         CreateHiddenInfoFile(sessionDir);// create a hidden info file that we will use to know that this is a Read Recorder Dir. we will use this when the open session button is pressed
@@ -71,6 +83,19 @@ public class Session {
         audioCollectionThread = null;
 
         NextEntry();// go to the first Entry;
+    }
+
+    public Session(Context context, String m_text, ArrayList<String> newLineTextDoc) throws NullPointerException, InstantiationException {
+        this(context, m_text, newLineTextDoc.toArray(new String[0]));//Originally the code above used new String[list.size()]. However, this blogpost reveals that due to JVM optimizations, using new String[0] is better now. http://shipilev.net/blog/2016/arrays-wisdom-ancients/
+    }
+
+    //open a session on the hdd of the device
+    public Session(Context context, File alreadyExistingSession) {
+        this.context = context;
+        String[] mTestArray = context.getResources().getStringArray(R.array.testArray);
+
+        entries = ne;
+        this.sessionDir = alreadyExistingSession;
     }
 
     private void SaveSentencesToCurrentLocation(String[] sentences) {

@@ -12,6 +12,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -19,14 +21,23 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.litmantech.readrecorder.audio.Playback;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.fileexplore.FileBrowser;
 import com.litmantech.readrecorder.read.Session;
+import com.litmantech.readrecorder.read.SessionExistsException;
 import com.litmantech.readrecorder.read.line.Entry;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -83,7 +94,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         String[] mTestArray = getResources().getStringArray(R.array.testArray);
         String sessionDirName = Session.DEFAULT_DIR_NAME;
-        session = new Session(this,sessionDirName,mTestArray);
+        try {
+            session = new Session(this,sessionDirName,mTestArray);
+        } catch (SessionExistsException e) {
+            File alreadyExistingSession = e.getSession();
+
+            session = new Session(this,alreadyExistingSession);
+
+        }
         UpdateUI();
     }
 
@@ -145,9 +163,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         UpdateUI();
     }
 
+    File holder = null;
     private void ShowNewSessionDialog() {
         final Context context = this;
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("New Session Setup");
         String title = "Explorer - Choose a .txt file";
         String sessionName = "Session1";
@@ -173,16 +192,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final TextView explorerLabel = (TextView) dialogView.findViewById(R.id.file_explorer_label);
         explorerLabel.setText("...");
 
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String m_Text = sessionNameView.getText().toString();
-                String[] mTestArray = getResources().getStringArray(R.array.testArray);
-                session = new Session(context,m_Text,mTestArray);
-                UpdateUI();
-            }
-        });
+        builder.setCancelable(false);
+        builder.setPositiveButton("Create Session",null);
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -190,15 +201,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        builder.show();
+        final AlertDialog dialog = builder.show();
 
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String m_Text = sessionNameView.getText().toString();
+                //String[] mTestArray = getResources().getStringArray(R.array.testArray);
+                ArrayList<String> newLineTextDoc = new ArrayList<String>();
+                try {
+                    if(holder!=null){
+                        FileInputStream is = null;
 
+                        is = new FileInputStream(holder);
+
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                        String line = reader.readLine();
+                        while(line != null){
+                            Log.d(TAG, line);
+                            line = line.trim();//clean it up
+                            if(!line.isEmpty())
+                                newLineTextDoc.add(line);
+                            line = reader.readLine();
+                        }
+                    }
+                    session = new Session(context,m_Text,newLineTextDoc);
+                    UpdateUI();
+                    dialog.dismiss();
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InstantiationException e) {
+                    Toast.makeText(context, "!!Session already exist, please choose another name!!", Toast.LENGTH_LONG).show();
+                }
+
+            }
+        });
         fileBrowser = new FileBrowser(this, (ListView) dialogView.findViewById(R.id.listView2), Environment.getExternalStorageDirectory());
         fileBrowser.setOnFileSelected(new FileBrowser.OnFileSelectedListener() {
             @Override
             public void onFileSelected(File fileSelected) {
+                holder = fileSelected;
+
                 txtFile.setText(fileSelected.getName());
                 txtFile.setSelection(txtFile.getText().toString().length());
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
+
 
             }
 
@@ -206,6 +256,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onFilesUnselected() {
                 txtFile.setText("*.txt");
                 txtFile.setSelection(txtFile.getText().toString().length());
+                holder = null;
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
             }
 
@@ -233,10 +285,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentSentenceTXT.setText(currentEntry.getSentence());
         currentSessionLabelTXT.setText("Session Name:"+session.getName());
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        fileBrowser.GoBack();
     }
 }
