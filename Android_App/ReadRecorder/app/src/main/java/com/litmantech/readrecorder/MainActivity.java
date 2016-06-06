@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -43,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button openSessionBTN;
     private Button newSessionBTN;
     private TextView currentSessionLabelTXT;
-    private String m_Text;
     private FileBrowser fileBrowser;
 
     @Override
@@ -72,27 +72,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ListView listView = (ListView) findViewById(R.id.listview);
 
 
-        fileBrowser = new FileBrowser(this, listView, Environment.getExternalStorageDirectory());
-        fileBrowser.setOnFileSelected(new FileBrowser.OnFileSelectedListener() {
-            @Override
-            public void onFileSelected(File fileSelected) {
-                TextView selectedFileLabel = (TextView) findViewById(R.id.selected_file);
-                selectedFileLabel.setText(fileSelected.getName());
 
-            }
-
-            @Override
-            public void onFilesUnselected(File fileSelected) {
-                
-            }
-
-            @Override
-            public void onDirSelected(File dirSelected) {
-                TextView currentDirLabel = (TextView) findViewById(R.id.currentDir);
-                currentDirLabel.setText(dirSelected.getAbsolutePath());
-            }
-        });
-        fileBrowser.GoToRoot();
 
         prevBTN.setOnClickListener(this);
         recBTN.setOnClickListener(this);
@@ -168,16 +148,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void ShowNewSessionDialog() {
         final Context context = this;
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Title");
-        builder.setMessage("This is a test");
+        builder.setTitle("New Session Setup");
+        String title = "Explorer - Choose a .txt file";
+        String sessionName = "Session1";
 
-        final EditText input = new EditText(this);
-        builder.setView(input);
+        //final EditText input = new EditText(this);
+        //builder.setView(input);
+
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.new_session_dialog, null);
+        builder.setView(dialogView);
+
+        final EditText sessionNameView = (EditText) dialogView.findViewById(R.id.session_name_edit);
+        sessionNameView.setText(sessionName);
+        sessionNameView.setSelection(sessionNameView.getText().toString().length());
+
+
+        final EditText txtFile = (EditText) dialogView.findViewById(R.id.selected_file_edit);
+        txtFile.setText("*.txt");//this does not mean anything. just to show the user we are looking for any txt file
+        txtFile.setEnabled(false);//use cant edit this Yet
+        txtFile.setSelection(txtFile.getText().toString().length());
+
+        final TextView explorerLabel = (TextView) dialogView.findViewById(R.id.file_explorer_label);
+        explorerLabel.setText("...");
+
 
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                m_Text = input.getText().toString();
+                String m_Text = sessionNameView.getText().toString();
                 String[] mTestArray = getResources().getStringArray(R.array.testArray);
                 session = new Session(context,m_Text,mTestArray);
                 UpdateUI();
@@ -191,6 +191,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         builder.show();
+
+
+        fileBrowser = new FileBrowser(this, (ListView) dialogView.findViewById(R.id.listView2), Environment.getExternalStorageDirectory());
+        fileBrowser.setOnFileSelected(new FileBrowser.OnFileSelectedListener() {
+            @Override
+            public void onFileSelected(File fileSelected) {
+                txtFile.setText(fileSelected.getName());
+                txtFile.setSelection(txtFile.getText().toString().length());
+
+            }
+
+            @Override
+            public void onFilesUnselected() {
+                txtFile.setText("*.txt");
+                txtFile.setSelection(txtFile.getText().toString().length());
+
+            }
+
+            @Override
+            public void onDirSelected(File dirSelected) {
+                explorerLabel.setText(dirSelected.getAbsolutePath());
+            }
+        });
+        fileBrowser.GoToRoot();
     }
 
     /**

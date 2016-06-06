@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <RelativeLayout
+        android:orientation="horizontal" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp">
+
+
+        <RelativeLayout
+            android:id="@+id/session_name_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Session Name:"
+                android:id="@+id/session_name_lable"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true" />
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="New Text"
+                android:id="@+id/session_name_edit"
+                android:layout_toRightOf="@+id/session_name_lable"
+                android:textColor="@android:color/background_dark"
+                android:singleLine="true"
+                android:layout_marginLeft="10dp" />
+
+        </RelativeLayout>
+
+
+
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/selected_file_layout"
+            android:layout_below="@+id/session_name_layout" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Selected File:"
+                android:id="@+id/selected_file_lable"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true" />
+
+            <EditText
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="*.txt"
+                android:enabled="false"
+                android:id="@+id/selected_file_edit"
+                android:layout_toRightOf="@+id/selected_file_lable"
+                android:textColor="@android:color/background_dark"
+                android:singleLine="true"
+                android:layout_marginLeft="10dp" />
+
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Explore - Choose a .txt file"
+            android:id="@+id/textView2"
+            android:layout_below="@+id/selected_file_layout"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="20dp"
+            android:textColor="@android:color/background_dark"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="..."
+            android:id="@+id/file_explorer_label"
+            android:layout_below="@+id/textView2"/>
+
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/file_explorer_label">
+
+            <ListView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/listView2"
+                android:layout_alignParentStart="true" />
+        </LinearLayout>
+    </RelativeLayout>
+
+
+</RelativeLayout>

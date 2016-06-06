@@ -27,7 +27,7 @@ public class FileBrowser {
          * @param fileSelected The file the user has selected
          */
         void onFileSelected(File fileSelected);
-        void onFilesUnselected(File fileSelected);
+        void onFilesUnselected();
         void onDirSelected(File dirSelected);
     }
 
@@ -107,6 +107,7 @@ public class FileBrowser {
 
         if(onFileSelected != null){
             onFileSelected.onDirSelected(dir);
+            onFileSelected.onFilesUnselected();
         }
 
         if (!dir.canRead()) {
