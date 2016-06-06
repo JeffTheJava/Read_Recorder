@@ -26,9 +26,11 @@ import android.widget.Toast;
 import com.litmantech.readrecorder.audio.Playback;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.fileexplore.FileBrowser;
+import com.litmantech.readrecorder.read.NewSessionDialog;
 import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.read.SessionExistsException;
 import com.litmantech.readrecorder.read.line.Entry;
+import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -99,7 +101,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (SessionExistsException e) {
             File alreadyExistingSession = e.getSession();
 
-            session = new Session(this,alreadyExistingSession);
+            try {
+                session = new Session(this,alreadyExistingSession);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
 
         }
         UpdateUI();
@@ -163,110 +169,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         UpdateUI();
     }
 
-    File holder = null;
     private void ShowNewSessionDialog() {
-        final Context context = this;
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("New Session Setup");
-        String title = "Explorer - Choose a .txt file";
-        String sessionName = "Session1";
+        File lastGoodSessionDir = null;
+        if(session != null)
+            lastGoodSessionDir = session.getSessionDir();
 
-        //final EditText input = new EditText(this);
-        //builder.setView(input);
-
-
-        LayoutInflater inflater = this.getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.new_session_dialog, null);
-        builder.setView(dialogView);
-
-        final EditText sessionNameView = (EditText) dialogView.findViewById(R.id.session_name_edit);
-        sessionNameView.setText(sessionName);
-        sessionNameView.setSelection(sessionNameView.getText().toString().length());
-
-
-        final EditText txtFile = (EditText) dialogView.findViewById(R.id.selected_file_edit);
-        txtFile.setText("*.txt");//this does not mean anything. just to show the user we are looking for any txt file
-        txtFile.setEnabled(false);//use cant edit this Yet
-        txtFile.setSelection(txtFile.getText().toString().length());
-
-        final TextView explorerLabel = (TextView) dialogView.findViewById(R.id.file_explorer_label);
-        explorerLabel.setText("...");
-
-        builder.setCancelable(false);
-        builder.setPositiveButton("Create Session",null);
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        //it is safe and ok to pass in null for lastGoodSessionDir
+        final NewSessionDialog sessionDialog = new NewSessionDialog(this,lastGoodSessionDir);
+        sessionDialog.setOnFileSelectedListener(new NewSessionDialog.OnFileSelectedListener() {
+            /**
+             * onNewSession will dismiss and close the dialog box
+             * @param session_
+             */
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+            public void onNewSession(Session session_) {
+                session = session_;
+                sessionDialog.setOnFileSelectedListener(null);
+                UpdateUI();
+            }
+
+            @Override
+            public void onDismissed() {
+                sessionDialog.setOnFileSelectedListener(null);
+                UpdateUI();
             }
         });
 
-        final AlertDialog dialog = builder.show();
-
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String m_Text = sessionNameView.getText().toString();
-                //String[] mTestArray = getResources().getStringArray(R.array.testArray);
-                ArrayList<String> newLineTextDoc = new ArrayList<String>();
-                try {
-                    if(holder!=null){
-                        FileInputStream is = null;
-
-                        is = new FileInputStream(holder);
-
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                        String line = reader.readLine();
-                        while(line != null){
-                            Log.d(TAG, line);
-                            line = line.trim();//clean it up
-                            if(!line.isEmpty())
-                                newLineTextDoc.add(line);
-                            line = reader.readLine();
-                        }
-                    }
-                    session = new Session(context,m_Text,newLineTextDoc);
-                    UpdateUI();
-                    dialog.dismiss();
-
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InstantiationException e) {
-                    Toast.makeText(context, "!!Session already exist, please choose another name!!", Toast.LENGTH_LONG).show();
-                }
-
-            }
-        });
-        fileBrowser = new FileBrowser(this, (ListView) dialogView.findViewById(R.id.listView2), Environment.getExternalStorageDirectory());
-        fileBrowser.setOnFileSelected(new FileBrowser.OnFileSelectedListener() {
-            @Override
-            public void onFileSelected(File fileSelected) {
-                holder = fileSelected;
-
-                txtFile.setText(fileSelected.getName());
-                txtFile.setSelection(txtFile.getText().toString().length());
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-
-
-            }
-
-            @Override
-            public void onFilesUnselected() {
-                txtFile.setText("*.txt");
-                txtFile.setSelection(txtFile.getText().toString().length());
-                holder = null;
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-
-            }
-
-            @Override
-            public void onDirSelected(File dirSelected) {
-                explorerLabel.setText(dirSelected.getAbsolutePath());
-            }
-        });
-        fileBrowser.GoToRoot();
     }
 
     /**

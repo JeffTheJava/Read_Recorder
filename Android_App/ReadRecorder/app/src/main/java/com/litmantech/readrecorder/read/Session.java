@@ -5,17 +5,15 @@ import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.util.Log;
 
-import com.litmantech.readrecorder.MainActivity;
 import com.litmantech.readrecorder.R;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.read.line.Entry;
 import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -25,6 +23,7 @@ public class Session {
     private static final String TAG = "Session";
     private static final String HIDDEN_FILE_NAME =".ReadRecorder.info";// that first dot makes this file hidden on android file system.
     public static final String DEFAULT_DIR_NAME = "Session1";
+    private static final String REF_TEXT_FILE_NAME = "RefText.txt";
 
     private Context context;
     private final ArrayList<Entry> entries;
@@ -32,24 +31,26 @@ public class Session {
     private Entry currentEntry;
     private Thread audioCollectionThread = null;
     private boolean stopCollectingAudio = false;
-    private final String sessionName;
 
     /**
+     * Create a new session using an String[] of sentences
+     * if you want to use an ArrayList<String>  use:
+     *  @see #Session(Context, String, ArrayList)
      *  A session will hold all the data about the current data collection test.
      *
      * @param context context of the active onscreen activity
      * @param sessionDirName the name of the dir we will save on the sd card. dont worry about if it exists or not. just pass in a string like "Jeff_folder"
      * @param sentences each sentences that was in the text document. make sure you clean in it and make it nice a pretty before passing in.
      * @throws NullPointerException
+     * @throws SessionExistsException
      */
     public Session(Context context, String sessionDirName, String[] sentences) throws NullPointerException, SessionExistsException{
         this.context = context;
-        this.sessionName = sessionDirName;
         if (sentences == null || sentences.length == 0)
             throw new NullPointerException("Your sentences are NULL!!!!");
 
         String dataDirectory = Environment.getExternalStorageDirectory().getAbsolutePath();
-        String currentSessionLocation = dataDirectory + "/" + sessionName;
+        String currentSessionLocation = dataDirectory + "/" + sessionDirName;
 
         sessionDir = new File(currentSessionLocation);
         if (!sessionDir.exists()) {
@@ -71,37 +72,60 @@ public class Session {
 
         //MakeDirVisibleOverUSB(sessionDir.toString());//having issues with one phone but works with 4 other phones i tested
 
-        entries = new ArrayList<Entry>();
-        for (String sentence : sentences) {
-            int uniqueID = entries.size();//so this is a cool trick. I don't want to i++ each loop (that's borrowing). Take a look at the loop. when it first starts, what is entries.size()? 0 right. then next loop what is it? 1. and so on..
-
-            Entry entry = new Entry(sentence, (uniqueID+1)/*make sure the ID starts at 1 not 0*/, sessionDir);
-            entry.setSession(this);
-            entries.add(entry);
-        }
+        entries = BuildEntries(sentences);//because entries is finale we use a method that returns entries
 
         audioCollectionThread = null;
 
         NextEntry();// go to the first Entry;
     }
 
-    public Session(Context context, String m_text, ArrayList<String> newLineTextDoc) throws NullPointerException, InstantiationException {
-        this(context, m_text, newLineTextDoc.toArray(new String[0]));//Originally the code above used new String[list.size()]. However, this blogpost reveals that due to JVM optimizations, using new String[0] is better now. http://shipilev.net/blog/2016/arrays-wisdom-ancients/
+    /**
+     * Create a new session using an ArrayList<String> of sentences
+     * if you want to use a String[] use:
+     *  @see #Session(Context, String, String[])
+     *  A session will hold all the data about the current data collection test.
+     *
+     * @param context context of the active onscreen activity
+     * @param sessionDirName the name of the dir we will save on the sd card. dont worry about if it exists or not. just pass in a string like "Jeff_folder"
+     * @param sentences each sentences that was in the text document. make sure you clean in it and make it nice a pretty before passing in.
+     * @throws NullPointerException
+     * @throws SessionExistsException
+     */
+    public Session(Context context, String sessionDirName, ArrayList<String> sentences) throws NullPointerException, SessionExistsException {
+        this(context, sessionDirName, sentences.toArray(new String[0]));//Originally this code used new String[list.size()]. However, i found a blogpost revealing that due to JVM optimizations, using new String[0] is better now. http://shipilev.net/blog/2016/arrays-wisdom-ancients/
     }
 
-    //open a session on the hdd of the device
-    public Session(Context context, File alreadyExistingSession) {
+    /**
+     * open a session that already exists on the hdd of the device
+     */
+    public Session(Context context, File alreadyExistingSession) throws IOException {
         this.context = context;
-        String[] mTestArray = context.getResources().getStringArray(R.array.testArray);
+        File refTXT = new File(alreadyExistingSession,REF_TEXT_FILE_NAME);
 
-        entries = ne;
+        String[] sentences = UiUtil.OpenTxtDocLineByLine(refTXT);
+
+        entries = BuildEntries(sentences);
         this.sessionDir = alreadyExistingSession;
+        audioCollectionThread = null;
+
+        NextEntry();// go to the first Entry;
+    }
+
+    private ArrayList<Entry> BuildEntries(String[] sentences) {
+        ArrayList<Entry> tempEntries = new ArrayList<Entry>();
+        for (String sentence : sentences) {
+            int uniqueID = tempEntries.size();//so this is a cool trick. I don't want to i++ each loop (that's borrowing). Take a look at the loop. when it first starts, what is entries.size()? 0 right. then next loop what is it? 1. and so on..
+
+            Entry entry = new Entry(sentence, (uniqueID+1)/*make sure the ID starts at 1 not 0*/, sessionDir);
+            entry.setSession(this);
+            tempEntries.add(entry);
+        }
+        return tempEntries;
     }
 
     private void SaveSentencesToCurrentLocation(String[] sentences) {
 
-        String filename = "List.txt";
-        File sessionTextFile = new File(sessionDir.getAbsolutePath(),filename);
+        File sessionTextFile = new File(sessionDir.getAbsolutePath(),REF_TEXT_FILE_NAME);
 
         StringBuilder builder = new StringBuilder();
         for(String s : sentences) {
@@ -117,7 +141,7 @@ public class Session {
             UiUtil.SaveStringToFile(sessionTextFile,message);
             MakeDirVisibleOverUSB(sessionTextFile.getAbsolutePath());
         } catch (IOException e) {
-            Log.d(TAG,"unable to save file:"+filename);
+            Log.d(TAG,"unable to save file:"+REF_TEXT_FILE_NAME);
         }
     }
 
@@ -144,7 +168,7 @@ public class Session {
     public boolean NextEntry() {
 
         if (currentEntry == null) {
-            currentEntry = entries.get(0);//we can hard code 0 because this class would have never been created if there were o entries
+            currentEntry = entries.get(0);//we can hard code 0 because this class would have never been created if there went at lest one
             return true;
         }
 
@@ -294,6 +318,10 @@ public class Session {
     }
 
     public String getName() {
-        return sessionName;
+        return sessionDir.getName();
+    }
+
+    public File getSessionDir(){
+        return sessionDir;
     }
 }

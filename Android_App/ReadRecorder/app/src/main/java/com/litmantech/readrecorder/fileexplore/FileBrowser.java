@@ -28,7 +28,7 @@ public class FileBrowser {
          */
         void onFileSelected(File fileSelected);
         void onFilesUnselected();
-        void onDirSelected(File dirSelected);
+        void onDirChange(File dirSelected);
     }
 
 
@@ -81,7 +81,6 @@ public class FileBrowser {
                 } else if(filename.toLowerCase().trim().contentEquals(GO_BACK_KEY.toLowerCase().trim())){
                     GoBack();
                 } else{
-                    Toast.makeText(context, filename + " is not a directory", Toast.LENGTH_LONG).show();
                     if(onFileSelected != null){
                         onFileSelected.onFileSelected(currentFile);
                     }
@@ -92,7 +91,11 @@ public class FileBrowser {
     }
 
     public void GoToRoot(){
-        UpdateAdapter(rootDir.getAbsolutePath());
+        GoToDir(rootDir);
+    }
+
+    public void GoToDir(File goToDir){
+        UpdateAdapter(goToDir.getAbsolutePath());
     }
 
     private void UpdateAdapter(String filename) {
@@ -106,18 +109,22 @@ public class FileBrowser {
         }
 
         if(onFileSelected != null){
-            onFileSelected.onDirSelected(dir);
+            onFileSelected.onDirChange(dir);
             onFileSelected.onFilesUnselected();
         }
 
         if (!dir.canRead()) {
             setTitle(getTitle() + " (inaccessible)");
         }
-        String[] list = dir.list();
-        if (list != null) {
-            for (String file : list) {
-                if (!file.startsWith(".")) {
-                    values.add(file);
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (!file.getName().startsWith(".")) {
+                    if (file.isDirectory()) {
+                        values.add(file.getName());// add if directory
+                    }else if(file.getName().trim().toLowerCase().endsWith(".txt".toLowerCase())){
+                        values.add(file.getName());//add if txt file
+                    }
                 }
             }
         }
