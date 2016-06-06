@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AbsListView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -54,10 +56,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Session session;
     private TextView currentSentenceTXT;
     private EditText sessionDirNameETXT;
+    private ListView sentenceList;
     private Button openSessionBTN;
     private Button newSessionBTN;
+    private Button playBTN;
     private TextView currentSessionLabelTXT;
     private FileBrowser fileBrowser;
+    private ArrayAdapter adapter2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         nextBTN = (Button) findViewById(R.id.next_btn);
         newSessionBTN = (Button) findViewById(R.id.new_session_btn);
         openSessionBTN = (Button) findViewById(R.id.open_session_btn);
-
-        ListView listView = (ListView) findViewById(R.id.listview);
-
+        playBTN = (Button) findViewById(R.id.play_btn);
+        sentenceList = (ListView) findViewById(R.id.sentence_list);
 
 
 
@@ -92,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         nextBTN.setOnClickListener(this);
         newSessionBTN.setOnClickListener(this);
         openSessionBTN.setOnClickListener(this);
+        playBTN.setOnClickListener(this);
 
 
         String[] mTestArray = getResources().getStringArray(R.array.testArray);
@@ -108,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
         }
+        SetNewArayAdapter();
         UpdateUI();
     }
 
@@ -158,6 +164,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 session.StopRecording();
             else
                 session.StartRecording(recorder);
+        }else if(v == playBTN){
+            PlaySavedAudio(session.getCurrentEntry());
         }else if(v == newSessionBTN){
             ShowNewSessionDialog();
 
@@ -169,6 +177,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         UpdateUI();
     }
 
+    private void PlaySavedAudio(Entry currentEntry) {
+        RunTest();
+    }
+
     private void ShowNewSessionDialog() {
         File lastGoodSessionDir = null;
         if(session != null)
@@ -176,6 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //it is safe and ok to pass in null for lastGoodSessionDir
         final NewSessionDialog sessionDialog = new NewSessionDialog(this,lastGoodSessionDir);
+        final Context context = this;
         sessionDialog.setOnFileSelectedListener(new NewSessionDialog.OnFileSelectedListener() {
             /**
              * onNewSession will dismiss and close the dialog box
@@ -185,6 +198,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onNewSession(Session session_) {
                 session = session_;
                 sessionDialog.setOnFileSelectedListener(null);
+                SetNewArayAdapter();
+
                 UpdateUI();
             }
 
@@ -213,5 +228,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentSentenceTXT.setText(currentEntry.getSentence());
         currentSessionLabelTXT.setText("Session Name:"+session.getName());
 
+        ShowSentenceList();
+
+    }
+
+    private void SetNewArayAdapter(){
+        ArrayList<Entry> entries = session.getEntries();
+        ArrayList<String> entriesSentences =  new ArrayList<String>();
+        for(Entry entry: entries){
+            entriesSentences.add(entry.getSentence());
+        }
+
+        adapter2 = new ArrayAdapter(this,
+                android.R.layout.simple_list_item_2, android.R.id.text1, entriesSentences);
+
+        sentenceList.setAdapter(adapter2);
+    }
+
+    private void ShowSentenceList() {
+
+
+
+        if(sentenceList == null)
+            return;
+        if(adapter2 == null)
+            return;
+
+        sentenceList.post(new Runnable() {
+            @Override
+            public void run() {
+
+                int position = adapter2.getPosition(session.getCurrentEntry().getSentence());
+                sentenceList.setSelector(R.color.colorAccent);
+                sentenceList.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+                sentenceList.setItemChecked(position, true);
+                sentenceList.requestFocusFromTouch();
+                sentenceList.setSelection(position);
+                //sentenceList.requestFocus();
+            }
+        });
     }
 }

@@ -21,7 +21,8 @@
             android:singleLine="true"
             android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"
-            android:id="@+id/session_dir_label" />
+            android:id="@+id/session_dir_label"
+            android:textSize="20dp" />
 
         <Button
             android:layout_width="wrap_content"
@@ -73,7 +74,15 @@
         android:text="@string/rec_btn"
         android:id="@+id/rec_btn"
         android:layout_above="@+id/prev_btn"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/play_btn"
+        android:layout_alignTop="@+id/rec_btn"
+        android:layout_alignParentEnd="true"
+        android:text="Play Button" />
 
     <Button
         android:layout_width="wrap_content"
@@ -83,29 +92,12 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true" />
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/rec_btn"
-        android:layout_below="@+id/relativeLayout">
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/sentence_list"
+        android:layout_below="@+id/relativeLayout"
+        android:layout_above="@+id/current_sentence_lable"
+        android:choiceMode="singleChoice"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Text"
-            android:id="@+id/currentDir" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Text"
-            android:layout_below="@+id/currentDir"
-            android:id="@+id/selected_file" />
-
-        <ListView android:id="@+id/listview" android:layout_width="match_parent"
-            android:layout_below="@+id/selected_file"
-
-            android:layout_height="match_parent" />
-
-    </RelativeLayout>
 </RelativeLayout>

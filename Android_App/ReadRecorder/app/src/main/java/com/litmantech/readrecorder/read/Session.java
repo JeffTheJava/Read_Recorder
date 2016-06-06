@@ -324,4 +324,8 @@ public class Session {
     public File getSessionDir(){
         return sessionDir;
     }
+
+    public ArrayList<Entry> getEntries() {
+        return entries;
+    }
 }
