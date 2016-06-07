@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -32,6 +33,7 @@ import com.litmantech.readrecorder.read.NewSessionDialog;
 import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.read.SessionExistsException;
 import com.litmantech.readrecorder.read.line.Entry;
+import com.litmantech.readrecorder.read.line.EntryListAdapter;
 import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.BufferedReader;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button playBTN;
     private TextView currentSessionLabelTXT;
     private FileBrowser fileBrowser;
-    private ArrayAdapter adapter2;
+    private EntryListAdapter entryListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -228,42 +230,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         currentSentenceTXT.setText(currentEntry.getSentence());
         currentSessionLabelTXT.setText("Session Name:"+session.getName());
 
-        ShowSentenceList();
+        UpdateSentenceListLayout();
 
     }
 
     private void SetNewArayAdapter(){
         ArrayList<Entry> entries = session.getEntries();
-        ArrayList<String> entriesSentences =  new ArrayList<String>();
-        for(Entry entry: entries){
-            entriesSentences.add(entry.getSentence());
-        }
 
-        adapter2 = new ArrayAdapter(this,
-                android.R.layout.simple_list_item_2, android.R.id.text1, entriesSentences);
+        entryListAdapter = new EntryListAdapter(this,entries);
 
-        sentenceList.setAdapter(adapter2);
+
+        sentenceList.setAdapter(entryListAdapter);
+
+        sentenceList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                session.GoToEntry(position);
+                UpdateUI();// so we can change the color of the selected item.
+            }
+        });
     }
 
-    private void ShowSentenceList() {
-
-
+    /**
+     * make sure the current entry session.getCurrentEntry() == the onscreen, highlighted position in the list view.
+     * if you ever change the session's current Entry make sure you call this to keep what the user is seeing in sync with whats going on.
+     */
+    private void UpdateSentenceListLayout() {
 
         if(sentenceList == null)
             return;
-        if(adapter2 == null)
+        if(entryListAdapter == null)
             return;
 
         sentenceList.post(new Runnable() {
             @Override
             public void run() {
 
-                int position = adapter2.getPosition(session.getCurrentEntry().getSentence());
-                sentenceList.setSelector(R.color.colorAccent);
-                sentenceList.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-                sentenceList.setItemChecked(position, true);
-                sentenceList.requestFocusFromTouch();
-                sentenceList.setSelection(position);
+                int position = entryListAdapter.getPosition(session.getCurrentEntry());
+                entryListAdapter.setSelection(position);
+                entryListAdapter.notifyDataSetChanged();
+                sentenceList.smoothScrollToPosition(position);
                 //sentenceList.requestFocus();
             }
         });

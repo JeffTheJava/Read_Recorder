@@ -178,8 +178,7 @@ public class Session {
         if (nextPosition >= entries.size())
             return false;//we are currently at the end. cant go past
 
-        currentEntry = entries.get(nextPosition);
-        return true;
+        return GoToEntry(nextPosition);
     }
 
     //TODO
@@ -200,8 +199,24 @@ public class Session {
         if (previousPosition <= -1)
             return false;//we are at the first entry already cant go back any more
 
-        currentEntry = entries.get(previousPosition);
-        return true;
+        return GoToEntry(previousPosition);
+    }
+
+    /**
+     * Set the current Entry to an entry in in the getEntries() arraylist
+     * @param position the position in the getEntries() arraylist that you want to set the current entry to.
+     * @return will return true if we can find a valid entry at this position. false is nothing happened.
+     * @see #getEntries()
+     */
+    public boolean GoToEntry(int position){
+
+        try {
+            currentEntry = entries.get(position);
+            return true;
+        }catch (ArrayIndexOutOfBoundsException e){
+            Log.e(TAG, e.getMessage());
+            return false;
+        }
     }
 
     /**
