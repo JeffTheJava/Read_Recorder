@@ -240,9 +240,10 @@ public class Session {
      * check isRecording to see if you have started yet.
      *
      * @param recorder the global recorder that will open and collect mic audio for us.
+     * @param onStopListener
      * @see #getCurrentEntry()
      */
-    public void StartRecording(final Recorder recorder) {
+    public void StartRecording(final Recorder recorder, final OnStopListener onStopListener) {
         if (audioCollectionThread != null)
             return;
 
@@ -256,6 +257,8 @@ public class Session {
                 recorder.setAudioListener(null);//stop adding audio
                 DrainAudio(audioHolder);
                 currentEntry.close();//close the audio file on disk
+                if(onStopListener != null)
+                    onStopListener.onStop();
                 audioCollectionThread = null;// if we got here then that mean we are ready to stop. null the thread so we can make a new one
             }
         }, "Audio Collection Thread in Session.java");
@@ -271,21 +274,25 @@ public class Session {
 
             } catch (InterruptedException e) {
                 StopRecording();//if we got interrupted then we need to stop!!!
+            } catch (IOException e) {
+                StopRecording();//if an error happen while recording!!!
             }
         }
     }
 
     /**
-     * save the last little bit of audio that is left
+     * save the last little bits of audio that is left
      */
     private void DrainAudio(LinkedBlockingQueue<short[]> audioHolder) {
         if(!audioHolder.isEmpty()){
-            short[] audioBuff = new short[0];
+            short[] audioBuff;
             try {
                 audioBuff = audioHolder.take();
                 currentEntry.SaveAudio(audioBuff);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                StopRecording();
+            } catch (IOException e) {
+                StopRecording();
             }
         }
     }
@@ -296,9 +303,14 @@ public class Session {
      */
     public void StopRecording() {
         stopCollectingAudio = true;
-        if (audioCollectionThread != null) {
+
+        //check to make sure the thread that called StopRecording() is not the same as the thread we are trying to stop (the audioCollectionThread)
+        boolean onAudioCollectionThread = Thread.currentThread() == audioCollectionThread;
+
+        //check if audioCollectionThread is done and we are not on the audioCollectionThread
+        if (audioCollectionThread != null && !onAudioCollectionThread) {
             try {
-                audioCollectionThread.join();
+                audioCollectionThread.join();// audioCollectionThread not done yet so lest wait and lock until its done
             } catch (InterruptedException e) {/*its ok for this thread to be interrupted i will do nothing here.*/}
         }
 
@@ -342,5 +354,9 @@ public class Session {
 
     public ArrayList<Entry> getEntries() {
         return entries;
+    }
+
+    public interface OnStopListener {
+        void onStop();
     }
 }

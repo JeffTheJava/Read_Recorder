@@ -47,29 +47,23 @@ public class Entry {
      * Must call close() when you are done streaming in audio data.
      * @see #close()
      * @param audioBuff the raw audio data you want to save
+     * @throws IOException
+     *
      */
-    public void SaveAudio(short[] audioBuff) {
-        try {
+    public void SaveAudio(short[] audioBuff) throws IOException {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(audioBuff.length * 2);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        byteBuffer.asShortBuffer().put(audioBuff);
 
-            ByteBuffer byteBuffer = ByteBuffer.allocate(audioBuff.length * 2);
-            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-            byteBuffer.asShortBuffer().put(audioBuff);
-
-            if(outputStream == null)
-                outputStream = new FileOutputStream(audioFile);
-            outputStream.write(byteBuffer.array());
-
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
+        if(outputStream == null)
+            outputStream = new FileOutputStream(audioFile);
+        outputStream.write(byteBuffer.array());
     }
 
     public void close() {
+        if(outputStream == null)
+            return;
+
         try {
             outputStream.flush();
             outputStream.close();

@@ -1,6 +1,7 @@
 package com.litmantech.readrecorder;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -165,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if(session.isRecording())
                 session.StopRecording();
             else
-                session.StartRecording(recorder);
+                session.StartRecording(recorder, OnStopCalled(this));
         }else if(v == playBTN){
             PlaySavedAudio(session.getCurrentEntry());
         }else if(v == newSessionBTN){
@@ -177,6 +178,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         UpdateUI();
+    }
+
+    //the Rec audio thread might stop but you did not call stop so you dont know it was stopped. you can use this to be notified.
+    private Session.OnStopListener OnStopCalled(final Context context) {
+        return new Session.OnStopListener(){
+            @Override
+            public void onStop() {
+                ((Activity)context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        UpdateUI();
+                    }
+                });
+            }
+        };
     }
 
     private void PlaySavedAudio(Entry currentEntry) {
