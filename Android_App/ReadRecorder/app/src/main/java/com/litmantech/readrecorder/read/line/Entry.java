@@ -24,7 +24,10 @@ public class Entry {
     private final File audioFile;
     private Session session;
 
-    public Entry(String sentence, int uniqueID, File sessionDir) {
+    public Entry(String sentence, int uniqueID, File sessionDir) throws NullPointerException{
+        if(sessionDir == null)
+            throw new NullPointerException("cannot create a new Entry with a null sessionDir");
+
         this.sentence = sentence;
         this.uniqueID = uniqueID;
 
@@ -77,5 +80,9 @@ public class Entry {
 
     public void setSession(Session session) {
         this.session = session;
+    }
+
+    public boolean hasSavedAudio(){
+        return audioFile.exists();
     }
 }

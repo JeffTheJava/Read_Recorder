@@ -21,9 +21,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Session {
     private static final String TAG = "Session";
-    private static final String HIDDEN_FILE_NAME =".ReadRecorder.info";// that first dot makes this file hidden on android file system.
+    public static final String HIDDEN_FILE_NAME =".ReadRecorder.info";// that first dot makes this file hidden on android file system.
     public static final String DEFAULT_DIR_NAME = "Session1";
-    private static final String REF_TEXT_FILE_NAME = "RefText.txt";
+    public static final String REF_TEXT_FILE_NAME = "RefText.txt";
 
     private Context context;
     private final ArrayList<Entry> entries;
@@ -31,6 +31,7 @@ public class Session {
     private Entry currentEntry;
     private Thread audioCollectionThread = null;
     private boolean stopCollectingAudio = false;
+    private OnStopListener onStopListener = null;
 
     /**
      * Create a new session using an String[] of sentences
@@ -104,8 +105,8 @@ public class Session {
 
         String[] sentences = UiUtil.OpenTxtDocLineByLine(refTXT);
 
-        entries = BuildEntries(sentences);
         this.sessionDir = alreadyExistingSession;
+        entries = BuildEntries(sentences);
         audioCollectionThread = null;
 
         NextEntry();// go to the first Entry;
@@ -240,12 +241,14 @@ public class Session {
      * check isRecording to see if you have started yet.
      *
      * @param recorder the global recorder that will open and collect mic audio for us.
-     * @param onStopListener
+     * @param onStopListener the Rec audio thread might stop but you did not call stop. so you did'ent know it was stopped. you can use this to be notified. its ok to set this to null
      * @see #getCurrentEntry()
      */
-    public void StartRecording(final Recorder recorder, final OnStopListener onStopListener) {
+    public void StartRecording(final Recorder recorder, OnStopListener onStopListener) {
         if (audioCollectionThread != null)
             return;
+
+        this.onStopListener = onStopListener;
 
         audioCollectionThread = new Thread(new Runnable() {
             @Override
@@ -257,9 +260,9 @@ public class Session {
                 recorder.setAudioListener(null);//stop adding audio
                 DrainAudio(audioHolder);
                 currentEntry.close();//close the audio file on disk
-                if(onStopListener != null)
-                    onStopListener.onStop();
                 audioCollectionThread = null;// if we got here then that mean we are ready to stop. null the thread so we can make a new one
+                if(Session.this.onStopListener != null)
+                    Session.this.onStopListener.onStop();
             }
         }, "Audio Collection Thread in Session.java");
 
@@ -273,8 +276,10 @@ public class Session {
                 currentEntry.SaveAudio(audioBuff);
 
             } catch (InterruptedException e) {
+                Log.e(TAG, e.getMessage());
                 StopRecording();//if we got interrupted then we need to stop!!!
             } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
                 StopRecording();//if an error happen while recording!!!
             }
         }

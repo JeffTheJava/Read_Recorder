@@ -31,6 +31,7 @@ import com.litmantech.readrecorder.audio.Playback;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.fileexplore.FileBrowser;
 import com.litmantech.readrecorder.read.NewSessionDialog;
+import com.litmantech.readrecorder.read.OpenSessionDialog;
 import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.read.SessionExistsException;
 import com.litmantech.readrecorder.read.line.Entry;
@@ -56,13 +57,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button prevBTN;
     private Button nextBTN;
     private Button recBTN;
+    private Button playBTN;
     private Session session;
     private TextView currentSentenceTXT;
     private EditText sessionDirNameETXT;
     private ListView sentenceList;
     private Button openSessionBTN;
     private Button newSessionBTN;
-    private Button playBTN;
     private TextView currentSessionLabelTXT;
     private FileBrowser fileBrowser;
     private EntryListAdapter entryListAdapter;
@@ -116,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
         }
-        SetNewArayAdapter();
+        SetNewArrayAdapter();
         UpdateUI();
     }
 
@@ -173,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ShowNewSessionDialog();
 
         }else if(v == openSessionBTN){
-
+            ShowOpenSessionDialog();
         }
 
 
@@ -210,13 +211,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         sessionDialog.setOnFileSelectedListener(new NewSessionDialog.OnFileSelectedListener() {
             /**
              * onNewSession will dismiss and close the dialog box
-             * @param session_
+             * @param session
              */
             @Override
-            public void onNewSession(Session session_) {
-                session = session_;
+            public void onNewSession(Session session) {
+                MainActivity.this.session = session;
                 sessionDialog.setOnFileSelectedListener(null);
-                SetNewArayAdapter();
+                SetNewArrayAdapter();
 
                 UpdateUI();
             }
@@ -224,6 +225,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onDismissed() {
                 sessionDialog.setOnFileSelectedListener(null);
+                UpdateUI();
+            }
+        });
+
+    }
+
+    private void ShowOpenSessionDialog() {
+        File lastGoodSessionDir = null;
+        if(session != null)
+            lastGoodSessionDir = session.getSessionDir();
+
+        //it is safe and ok to pass in null for lastGoodSessionDir
+        final OpenSessionDialog openDialog = new OpenSessionDialog(this,lastGoodSessionDir);
+        final Context context = this;
+        openDialog.setOnFileSelectedListener(new OpenSessionDialog.OnFileSelectedListener() {
+            /**
+             * onNewSession will dismiss and close the dialog box
+             * @param session
+             */
+            @Override
+            public void onNewSession(Session session) {
+                MainActivity.this.session = session;
+                openDialog.setOnFileSelectedListener(null);
+                SetNewArrayAdapter();
+
+                UpdateUI();
+            }
+
+            @Override
+            public void onDismissed() {
+                openDialog.setOnFileSelectedListener(null);
                 UpdateUI();
             }
         });
@@ -238,9 +270,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(session.isRecording()){
             prevBTN.setEnabled(false);
             nextBTN.setEnabled(false);
+            sentenceList.setEnabled(false);
+            openSessionBTN.setEnabled(false);
+            newSessionBTN.setEnabled(false);
         }else{
             prevBTN.setEnabled(true);
             nextBTN.setEnabled(true);
+            sentenceList.setEnabled(true);
+            openSessionBTN.setEnabled(true);
+            newSessionBTN.setEnabled(true);
         }
 
         currentSentenceTXT.setText(currentEntry.getSentence());
@@ -248,9 +286,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         UpdateSentenceListLayout();
 
+        playBTN.setEnabled(currentEntry.hasSavedAudio() && !session.isRecording());
+
     }
 
-    private void SetNewArayAdapter(){
+    private void SetNewArrayAdapter(){
         ArrayList<Entry> entries = session.getEntries();
 
         entryListAdapter = new EntryListAdapter(this,entries);
