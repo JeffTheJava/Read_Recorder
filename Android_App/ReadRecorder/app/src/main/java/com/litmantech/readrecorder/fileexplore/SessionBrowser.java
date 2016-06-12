@@ -14,6 +14,7 @@ import com.litmantech.readrecorder.read.Session;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -35,10 +36,10 @@ public class SessionBrowser {
 
 
     private final Context context;
-    private final ArrayList values;
+    private final ArrayList<BrowserFile> values;
     private String currentPath = "";
     private String title;
-    private final ArrayAdapter adapter;
+    private final SessionListAdapter adapter;
     private final ListView listView;
     private final File rootDir;
     private OnFileSelectedListener onFileSelected;
@@ -54,24 +55,29 @@ public class SessionBrowser {
         }
         setTitle(currentPath);
 
+       values = new ArrayList<BrowserFile>();
+
         // Read all files sorted into the values-array
-        values = new ArrayList();
+        //values = new ArrayList();
 
 
         // Put the data into the list
-        adapter = new ArrayAdapter(context,
-                android.R.layout.simple_list_item_2, android.R.id.text1, values);
+//        adapter = new ArrayAdapter(context,
+//                android.R.layout.simple_list_item_2, android.R.id.text1, values);
+
+        adapter =  new SessionListAdapter(context, values);
         listView.setAdapter(adapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String filename = (String) parent.getItemAtPosition(position);
+                BrowserFile file = (BrowserFile) parent.getItemAtPosition(position);
+                String fileName = file.fileName;
                 File currentFile;
                 if (currentPath.endsWith(File.separator)) {
-                    currentFile = new File(currentPath + filename);
+                    currentFile = new File(currentPath + fileName);
                 } else {
-                    currentFile = new File(currentPath + File.separator + filename);
+                    currentFile = new File(currentPath + File.separator + fileName);
                 }
 
                 if (currentFile.isDirectory()) {
@@ -81,6 +87,7 @@ public class SessionBrowser {
                     UpdateAdapter(currentFile.getAbsolutePath());
                     if(onFileSelected != null){
                         onFileSelected.onFileSelected(currentFile);
+                        adapter.setSelection(position);
                     }
                 }
             }
@@ -94,10 +101,11 @@ public class SessionBrowser {
     public void GoToDir(File goToDir, boolean selectFirstItem){
         UpdateAdapter(goToDir.getAbsolutePath());
         if(selectFirstItem && values.size() > 0){
-            File firstDir = new File(currentPath + File.separator + values.get(0));
+            File firstDir = new File(currentPath + File.separator + values.get(0).fileName);
             UpdateAdapter(firstDir.getAbsolutePath());
             if(onFileSelected != null){
                 onFileSelected.onFileSelected(firstDir);
+                adapter.setSelection(0);
             }
         }
     }
@@ -126,13 +134,18 @@ public class SessionBrowser {
                     if (!file.getName().startsWith(".")) {
                         if (file.isDirectory()) {
                             if (isSessionFolder(file)) {
-                                values.add(file.getName());// add if directory
+                                BrowserFile theFile = new BrowserFile(file.getName(),file.getAbsolutePath(),file.lastModified(),file.isDirectory());
+                                values.add(theFile);// add if directory
                             }
                         }
                     }
                 }
             }
-            Collections.sort(values,String.CASE_INSENSITIVE_ORDER);
+            Collections.sort(values,new Comparator<BrowserFile>(){
+                public int compare(BrowserFile file1, BrowserFile file2) {
+                    return file1.fileAbsolutePath.compareToIgnoreCase(file1.fileAbsolutePath);
+                }
+            });
         }
 
         adapter.notifyDataSetChanged();
