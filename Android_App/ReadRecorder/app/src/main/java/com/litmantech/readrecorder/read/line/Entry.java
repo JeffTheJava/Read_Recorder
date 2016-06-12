@@ -5,16 +5,18 @@ import android.content.Context;
 import com.litmantech.readrecorder.read.Session;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
  * Created by Jeff_Dev_PC on 5/20/2016.
  */
-public class Entry {
+public class  Entry {
 
     private static final String TAG = "Entry";
     private static Context context;
@@ -23,6 +25,7 @@ public class Entry {
     private final int uniqueID;
     private final File audioFile;
     private Session session;
+    private FileInputStream inputStream;
 
     public Entry(String sentence, int uniqueID, File sessionDir) throws NullPointerException{
         if(sessionDir == null)
@@ -63,18 +66,45 @@ public class Entry {
         outputStream.write(byteBuffer.array());
     }
 
+    public byte[] ReadAudio(int blockSize) throws IOException , BufferUnderflowException{
+        int fileByteLength = (int) audioFile.length();
+
+        byte[] byteData = new byte[blockSize];
+        if(inputStream == null)
+            inputStream = new FileInputStream(audioFile);
+
+        int actualBytes = inputStream.read(byteData, 0, byteData.length);
+
+
+        if(actualBytes == -1)
+            throw new BufferUnderflowException();//No more audio on disk
+
+        byte[] outputByte = new byte[actualBytes];
+        System.arraycopy(byteData, 0, outputByte, 0, outputByte.length);
+        return outputByte;
+    }
+
     public void close() {
-        if(outputStream == null)
-            return;
-
-        try {
-            outputStream.flush();
-            outputStream.close();
-            outputStream=null;
-            session.MakeDirVisibleOverUSB(audioFile.getAbsolutePath());
-        } catch (IOException e) {
-
+        if(outputStream != null) {
+            try {
+                outputStream.flush();
+                outputStream.close();
+                outputStream = null;
+                session.MakeDirVisibleOverUSB(audioFile.getAbsolutePath());
+            } catch (IOException e) {
+                //TODO
+            }
         }
+
+        if(inputStream != null) {
+            try {
+                inputStream.close();
+                inputStream = null;
+            } catch (IOException e) {
+                //TODO
+            }
+        }
+
     }
 
 

@@ -8,6 +8,7 @@ import android.util.Log;
 import com.litmantech.readrecorder.R;
 import com.litmantech.readrecorder.audio.Recorder;
 import com.litmantech.readrecorder.read.line.Entry;
+import com.litmantech.readrecorder.utilities.OnStopListener;
 import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.File;
@@ -361,7 +362,4 @@ public class Session {
         return entries;
     }
 
-    public interface OnStopListener {
-        void onStop();
-    }
 }

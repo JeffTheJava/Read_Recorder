@@ -88,8 +88,10 @@ public class Recorder {
      */
     public void Stop() {
         stopCollector = true;
+        //check to make sure the thread that called StopRecording() is not the same as the thread we are trying to stop (the audioCollectionThread)
+        boolean onCollectorThread = Thread.currentThread() == collector;
 
-        if(collector != null) {
+        if(collector != null && !onCollectorThread) {
             try {
                 collector.interrupt();
                 collector.join();

@@ -36,6 +36,7 @@ import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.read.SessionExistsException;
 import com.litmantech.readrecorder.read.line.Entry;
 import com.litmantech.readrecorder.read.line.EntryListAdapter;
+import com.litmantech.readrecorder.utilities.OnStopListener;
 import com.litmantech.readrecorder.utilities.UiUtil;
 
 import java.io.BufferedReader;
@@ -113,10 +114,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             try {
                 session = new Session(this,alreadyExistingSession);
             } catch (IOException e1) {
-                e1.printStackTrace();
+                String uniqueName = sessionDirName+DateFormat.format("yyyy-MM-dd_hh-mm-ss", new Date());
+                try {
+                    session = new Session(this,uniqueName,mTestArray);
+                } catch (SessionExistsException e2) {
+                    throw new RuntimeException("something big has gone wrong. need to look into this!!!");
+                }
             }
 
         }
+
+        playback = new Playback();
         SetNewArrayAdapter();
         UpdateUI();
     }
@@ -145,12 +153,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void RunTest() {
-
-        if(playback == null)
-            playback = new Playback();
-
-
-        LinkedBlockingQueue audioListener = playback.Play();
+        LinkedBlockingQueue audioListener = playback.PlayLive(OnStopCalled(this));
 
         recorder.setAudioListener(audioListener);
 
@@ -169,7 +172,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             else
                 session.StartRecording(recorder, OnStopCalled(this));
         }else if(v == playBTN){
-            PlaySavedAudio(session.getCurrentEntry());
+            if(!playback.isPlaying())
+                PlaySavedAudio(session.getCurrentEntry(),OnStopCalled(this));
+            else playback.Stop();
+
         }else if(v == newSessionBTN){
             ShowNewSessionDialog();
 
@@ -182,8 +188,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //the Rec audio thread might stop but you did not call stop so you dont know it was stopped. you can use this to be notified.
-    private Session.OnStopListener OnStopCalled(final Context context) {
-        return new Session.OnStopListener(){
+    private OnStopListener OnStopCalled(final Context context) {
+        return new OnStopListener(){
             @Override
             public void onStop() {
                 ((Activity)context).runOnUiThread(new Runnable() {
@@ -196,8 +202,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         };
     }
 
-    private void PlaySavedAudio(Entry currentEntry) {
-        RunTest();
+    private void PlaySavedAudio(Entry currentEntry, OnStopListener onStopListener) {
+        if(!currentEntry.hasSavedAudio()) return;
+
+        if(playback.isPlaying()) return;
+
+        if(playback == null)
+            playback = new Playback();
+
+
+        playback.PlayFile(currentEntry,onStopListener);
+
+
     }
 
     private void ShowNewSessionDialog() {
@@ -267,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private void UpdateUI() {
         Entry currentEntry = session.getCurrentEntry();
-        if(session.isRecording()){
+        if(session.isRecording() || playback.isPlaying()){
             prevBTN.setEnabled(false);
             nextBTN.setEnabled(false);
             sentenceList.setEnabled(false);
@@ -286,7 +302,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         UpdateSentenceListLayout();
 
+        recBTN.setEnabled(!playback.isPlaying());
+        recBTN.setText(session.isRecording()?"Record Stop":"Record Start");
+
         playBTN.setEnabled(currentEntry.hasSavedAudio() && !session.isRecording());
+        playBTN.setText(playback.isPlaying()?"Stop Button":"Play Button");
 
     }
 
