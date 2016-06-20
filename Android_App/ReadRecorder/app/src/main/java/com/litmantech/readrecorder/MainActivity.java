@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
@@ -14,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.format.DateFormat;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,11 +50,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+    private static final int PERMISSIONS_CODE = 55;
     private Recorder recorder;
     private Playback playback;
     private boolean testAudioStuffON = false;
@@ -68,21 +73,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView currentSessionLabelTXT;
     private FileBrowser fileBrowser;
     private EntryListAdapter entryListAdapter;
+    private int recAudioPermission;
+    private int exReadStoragePermission;
+    private int exWriteStoragePermission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);//dont let phone sleep
-
-        if (ContextCompat.checkSelfPermission(this,  Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-
-
-        }
-
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                55);
 
         currentSentenceTXT = (TextView) findViewById(R.id.current_sentence);
         currentSessionLabelTXT = (TextView) findViewById(R.id.session_dir_label);
@@ -94,6 +93,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         playBTN = (Button) findViewById(R.id.play_btn);
         sentenceList = (ListView) findViewById(R.id.sentence_list);
 
+
+        RequestAndroidPermissions();
+
+    }
+
+    private void RequestAndroidPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            recAudioPermission = ContextCompat.checkSelfPermission(this,  Manifest.permission.RECORD_AUDIO);
+            exReadStoragePermission = ContextCompat.checkSelfPermission(this,  Manifest.permission.READ_EXTERNAL_STORAGE);
+            exWriteStoragePermission = ContextCompat.checkSelfPermission(this,  Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        }else{
+            recAudioPermission = PackageManager.PERMISSION_GRANTED;
+            exReadStoragePermission = PackageManager.PERMISSION_GRANTED;
+            exWriteStoragePermission = PackageManager.PERMISSION_GRANTED;
+        }
+
+        //String[] permissionList =
+        ArrayList<String> permissionList = new ArrayList<>();
+
+        if(recAudioPermission!= PackageManager.PERMISSION_GRANTED) permissionList.add(Manifest.permission.RECORD_AUDIO);
+        if(exReadStoragePermission!= PackageManager.PERMISSION_GRANTED) permissionList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        if(exWriteStoragePermission!= PackageManager.PERMISSION_GRANTED) permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if(permissionList.size() == 0){
+            this.onRequestPermissionsResult(PERMISSIONS_CODE,
+                    new String[]{Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    new int[]{recAudioPermission,exReadStoragePermission,exWriteStoragePermission});
+        }else {
+            ActivityCompat.requestPermissions(this,permissionList.toArray(new String[permissionList.size()]), PERMISSIONS_CODE);
+        }
+    }
+
+    //if we get access to all permissions
+    private void OnPermissionsSuccessful(){
 
 
         prevBTN.setOnClickListener(this);
@@ -129,6 +163,67 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         UpdateUI();
     }
 
+    private void OnPermissionsFail() {
+        prevBTN.setEnabled(false);
+        recBTN.setEnabled(false);
+        nextBTN.setEnabled(false);
+        newSessionBTN.setEnabled(false);
+        openSessionBTN.setEnabled(false);
+        playBTN.setEnabled(false);
+
+        currentSentenceTXT.setText("Can NOT use app until granted permissions:\nRECORD_AUDIO\nEXTERNAL_STORAGE");
+        currentSessionLabelTXT.setText("...");
+
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        HashMap<String,Integer> permissionsMap = new HashMap<>();
+
+        if (requestCode == PERMISSIONS_CODE) {
+            for (int i = 0; i < permissions.length; i++) {
+                String permission = permissions[i];
+                int grantResult = grantResults[i];
+                permissionsMap.put(permission, grantResult);
+
+            }
+        }
+
+        if(permissionsMap.containsKey(Manifest.permission.RECORD_AUDIO)) {
+            recAudioPermission = permissionsMap.get(Manifest.permission.RECORD_AUDIO);
+        }
+
+        if(permissionsMap.containsKey(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            exReadStoragePermission = permissionsMap.get(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+
+        if(permissionsMap.containsKey(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            exWriteStoragePermission = permissionsMap.get(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+
+        if(recAudioPermission != PackageManager.PERMISSION_GRANTED) {
+            OnPermissionsFail();
+            return;
+        }
+
+        if(exReadStoragePermission != PackageManager.PERMISSION_GRANTED) {
+            OnPermissionsFail();
+            return;
+        }
+
+        if(exWriteStoragePermission != PackageManager.PERMISSION_GRANTED) {
+            OnPermissionsFail();
+            return;
+        }
+
+
+        //if we made it here then we have all permissions
+        OnPermissionsSuccessful();
+    }
+
 
     @Override
     protected void onResume(){
@@ -139,8 +234,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(recorder == null)
             recorder = new Recorder();
 
-        recorder.Start();
+        if(havePermission())
+            recorder.Start();
     }
+
 
     @Override
     protected void onPause() {
@@ -349,5 +446,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //sentenceList.requestFocus();
             }
         });
+    }
+
+    private boolean havePermission() {
+        if(recAudioPermission !=  PackageManager.PERMISSION_GRANTED) return false;
+        if(exReadStoragePermission !=  PackageManager.PERMISSION_GRANTED) return false;
+        if(exWriteStoragePermission !=  PackageManager.PERMISSION_GRANTED) return false;
+
+        return true;
     }
 }
