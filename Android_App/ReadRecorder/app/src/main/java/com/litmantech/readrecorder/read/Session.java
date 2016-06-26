@@ -33,6 +33,8 @@ public class Session {
     private Thread audioCollectionThread = null;
     private boolean stopCollectingAudio = false;
     private OnStopListener onStopListener = null;
+    private String[] allEntriesSentences = null;
+    private int entryRecCount =  -1;//how many entries have recordings
 
     /**
      * Create a new session using an String[] of sentences
@@ -362,4 +364,40 @@ public class Session {
         return entries;
     }
 
+    /**
+     * get a list of all the sentences. you could do this on your own by getting all the entries then looping thourh all them but if you keep doing that it will take a long time.
+     * use this to store a the list of sentences in mem and get them when ever u need them.
+     * @return an array of sentences from getEntries
+     * @see #getEntries()
+     */
+    public String[] getEntriesSentences() {
+        if(allEntriesSentences == null){ // we keep this value null until we need it. no point in doing all this work if no one ever needs it. but after the first time u need it we keep it in mem
+            ArrayList<String> holder = new ArrayList<>();
+
+            for(Entry entry: entries){
+                holder.add(entry.getSentence());
+            }
+
+            allEntriesSentences = holder.toArray(new String[holder.size()]);
+        }
+
+        return allEntriesSentences;
+    }
+
+    public int getEntriesRecCount() {
+        if(entryRecCount == -1) UpdateRecCount();
+        return entryRecCount;
+    }
+
+    /**
+     * Help Keep Track Of how may Recordings have been done.
+     * dont keep calling this. it is very heavy . only call it when you need it. try not to call this on your ui thread. you can but please dont.
+     */
+    public void UpdateRecCount() {
+
+        entryRecCount = 0;
+        for(Entry entry: entries){
+            if(entry.hasSavedAudio()) entryRecCount++;
+        }
+    }
 }

@@ -7,58 +7,59 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
         android:orientation="vertical"
-        android:background="@android:color/white">
+        android:background="@android:color/white"
+        android:layout_margin="5dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1.5"
-            android:background="@color/colorPrimaryDark">
+            android:layout_weight="1.2"
+            android:layout_marginLeft="15dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Session Name 1"
-                android:id="@+id/textView5"
-                android:textColor="@android:color/white"
+                android:id="@+id/session_label"
+                android:textColor="@color/colorPrimary"
                 android:layout_marginTop="5dp"
-                android:layout_marginLeft="5dp"
                 android:textSize="20dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Date Created: June 12 2016 08:00pm"
-                android:id="@+id/textView6"
-                android:layout_below="@+id/textView5"
-                android:layout_alignStart="@+id/textView5"
-                android:textColor="@color/switch_thumb_material_light"
-                android:textSize="8dp" />
+                android:id="@+id/session_mod_date"
+                android:layout_below="@+id/session_label"
+                android:layout_alignStart="@+id/session_label"
+                android:textColor="@android:color/darker_gray"
+                android:textSize="8dp"
+                android:layout_alignLeft="@+id/session_label" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="this is a test of sentences number 1\nthis is a test of sentences number 2\nthis is a test of sentences number 3\nthis is a test of sentences number 4\nthis is a test of sentences number 5\nthis is a test of sentences number 6\n"
-                android:id="@+id/textView7"
-                android:layout_below="@+id/textView6"
-                android:textColor="@android:color/white"
-                android:layout_alignStart="@+id/textView5"
-                android:layout_marginTop="8dp" />
+                android:id="@+id/sentence_list"
+                android:layout_below="@+id/session_mod_date"
+                android:textColor="@android:color/darker_gray"
+                android:layout_alignStart="@+id/session_label"
+                android:layout_marginTop="8dp"
+                android:layout_alignLeft="@+id/session_label" />
         </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="2">
+            android:layout_weight="2"
+            android:background="@color/colorPrimary">
 
             <ImageView
-                android:layout_width="2dp"
+                android:layout_width="1dp"
                 android:layout_height="match_parent"
                 android:id="@+id/divider_image"
-                android:background="@android:color/darker_gray"
+                android:background="@android:color/white"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true" />
             <RelativeLayout
@@ -71,20 +72,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="5"
-                    android:id="@+id/textView"
+                    android:id="@+id/sentences_count"
                     android:layout_alignParentTop="true"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="5dp"
-                    android:textColor="@android:color/black"
+                    android:textColor="@android:color/white"
                     android:textSize="35dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sentences"
-                    android:id="@+id/textView2"
-                    android:layout_below="@+id/textView"
-                    android:layout_centerHorizontal="true" />
+                    android:id="@+id/sentences_count_label"
+                    android:layout_below="@+id/sentences_count"
+                    android:layout_centerHorizontal="true"
+                    android:textColor="@android:color/white" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -97,20 +99,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="5"
-                    android:id="@+id/textView3"
+                    android:id="@+id/rec_count"
                     android:layout_alignParentTop="true"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="5dp"
-                    android:textColor="@android:color/black"
+                    android:textColor="@android:color/white"
                     android:textSize="35dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Recordings"
-                    android:id="@+id/textView4"
-                    android:layout_below="@+id/textView3"
-                    android:layout_centerHorizontal="true" />
+                    android:id="@+id/rec_count_label"
+                    android:layout_below="@+id/rec_count"
+                    android:layout_centerHorizontal="true"
+                    android:textColor="@android:color/white" />
             </RelativeLayout>
 
         </RelativeLayout>

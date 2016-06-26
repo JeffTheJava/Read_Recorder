@@ -104,7 +104,7 @@ public class  Entry {
                 //TODO
             }
         }
-
+        session.UpdateRecCount();
     }
 
 

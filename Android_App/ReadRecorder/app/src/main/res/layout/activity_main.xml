@@ -22,7 +22,8 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentStart="true"
             android:id="@+id/session_dir_label"
-            android:textSize="20dp" />
+            android:textSize="20dp"
+            android:layout_alignParentLeft="true" />
 
         <Button
             android:layout_width="wrap_content"
@@ -66,7 +67,8 @@
         android:text="@string/previous_btn"
         android:id="@+id/prev_btn"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -74,7 +76,8 @@
         android:text="@string/rec_btn"
         android:id="@+id/rec_btn"
         android:layout_above="@+id/prev_btn"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -82,7 +85,8 @@
         android:id="@+id/play_btn"
         android:layout_alignTop="@+id/rec_btn"
         android:layout_alignParentEnd="true"
-        android:text="Play Button" />
+        android:text="Play Button"
+        android:layout_alignParentRight="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -90,7 +94,8 @@
         android:text="@string/next_btn"
         android:id="@+id/next_btn"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true" />
 
     <ListView
         android:layout_width="wrap_content"

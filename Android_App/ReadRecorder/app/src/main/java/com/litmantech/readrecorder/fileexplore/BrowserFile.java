@@ -9,7 +9,7 @@ public class BrowserFile{
     public final long timeCreated;
     public final boolean isDirectory;
 
-    BrowserFile(String fileName, String fileAbsolutePath, long timeCreated, boolean isDirectory) {
+    public BrowserFile(String fileName, String fileAbsolutePath, long timeCreated, boolean isDirectory) {
         this.fileName = fileName;
         this.fileAbsolutePath = fileAbsolutePath;
         this.timeCreated = timeCreated;

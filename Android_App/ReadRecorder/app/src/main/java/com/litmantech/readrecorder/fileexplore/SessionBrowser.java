@@ -12,6 +12,7 @@ import android.widget.Toast;
 import com.litmantech.readrecorder.read.Session;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +37,7 @@ public class SessionBrowser {
 
 
     private final Context context;
-    private final ArrayList<BrowserFile> values;
+    private final ArrayList<Session> values;
     private String currentPath = "";
     private String title;
     private final SessionListAdapter adapter;
@@ -55,7 +56,7 @@ public class SessionBrowser {
         }
         setTitle(currentPath);
 
-       values = new ArrayList<BrowserFile>();
+       values = new ArrayList<Session>();
 
         // Read all files sorted into the values-array
         //values = new ArrayList();
@@ -101,7 +102,7 @@ public class SessionBrowser {
     public void GoToDir(File goToDir, boolean selectFirstItem){
         UpdateAdapter(goToDir.getAbsolutePath());
         if(selectFirstItem && values.size() > 0){
-            File firstDir = new File(currentPath + File.separator + values.get(0).fileName);
+            File firstDir = new File(currentPath + File.separator + values.get(0).getName());
             UpdateAdapter(firstDir.getAbsolutePath());
             if(onFileSelected != null){
                 onFileSelected.onFileSelected(firstDir);
@@ -134,16 +135,22 @@ public class SessionBrowser {
                     if (!file.getName().startsWith(".")) {
                         if (file.isDirectory()) {
                             if (isSessionFolder(file)) {
-                                BrowserFile theFile = new BrowserFile(file.getName(),file.getAbsolutePath(),file.lastModified(),file.isDirectory());
-                                values.add(theFile);// add if directory
+
+
+                                try {
+                                    Session session = new Session(context, file);
+                                    values.add(session);// add if directory
+                                }catch (IOException e){
+                                    //TODO
+                                }
                             }
                         }
                     }
                 }
             }
-            Collections.sort(values,new Comparator<BrowserFile>(){
-                public int compare(BrowserFile file1, BrowserFile file2) {
-                    return file1.fileAbsolutePath.compareToIgnoreCase(file1.fileAbsolutePath);
+            Collections.sort(values,new Comparator<Session>(){
+                public int compare(Session file1, Session file2) {
+                    return file1.getSessionDir().getAbsolutePath().compareToIgnoreCase(file2.getSessionDir().getAbsolutePath());
                 }
             });
         }
