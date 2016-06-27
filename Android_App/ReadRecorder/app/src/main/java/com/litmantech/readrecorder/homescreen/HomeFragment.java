@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import com.litmantech.readrecorder.MainActivity;
 import com.litmantech.readrecorder.R;
 import com.litmantech.readrecorder.fileexplore.SessionFile;
 import com.litmantech.readrecorder.fileexplore.SessionListAdapter;
+import com.litmantech.readrecorder.read.NewSessionDialog;
 import com.litmantech.readrecorder.read.Session;
 import com.litmantech.readrecorder.utilities.UiUtil;
 
@@ -205,7 +207,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void onCreateSessionClicked() {
-        ((MainActivity)context).CreateSessionScreen(this);
+        CreateSessionScreen();
     }
 
     private void onOpenSessionClicked(Session session) {
@@ -217,5 +219,40 @@ public class HomeFragment extends Fragment {
 
     public void AddSession(Session session) {
         sessionArray.add(session);// add if directory
+    }
+
+
+
+    public void CreateSessionScreen(){
+
+        File lastGoodSessionDir = null;
+
+        //it is safe and ok to pass in null for lastGoodSessionDir
+        final NewSessionDialog sessionDialog = new NewSessionDialog(context,lastGoodSessionDir);
+        sessionDialog.setOnFileSelectedListener(new NewSessionDialog.OnFileSelectedListener() {
+            /**
+             * onNewSession will dismiss and close the dialog box
+             * @param session
+             */
+            @Override
+            public void onNewSession(final Session session) {
+                sessionDialog.setOnFileSelectedListener(null);
+                ((Activity)context).runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        HomeFragment.this.AddSession(session);//add a session to the session list
+                        HomeFragment.this.UpdateUI();
+                        //ShowSessionScreen(session);
+                    }
+                });
+            }
+
+            @Override
+            public void onDismissed() {
+                sessionDialog.setOnFileSelectedListener(null);
+            }
+        });
+
     }
 }
