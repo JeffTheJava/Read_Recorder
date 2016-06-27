@@ -1,31 +1,14 @@
 package com.litmantech.readrecorder;
 
-import android.Manifest;
-import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.litmantech.readrecorder.homescreen.HomeFragment;
-import com.litmantech.readrecorder.permissionsscreen.NoPermissionFragment;
 import com.litmantech.readrecorder.permissionsscreen.PermissionsHandler;
-import com.litmantech.readrecorder.read.NewSessionDialog;
 import com.litmantech.readrecorder.read.Session;
-import com.litmantech.readrecorder.viewsessionscreen.SessionFragment;
-
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity implements PermissionsHandler.OnPermissionsListener {
 
@@ -82,7 +65,6 @@ public class MainActivity extends AppCompatActivity implements PermissionsHandle
     }
 
     public void ShowHomeScreen() {
-
         navHandler.ShowHomeScreen();
     }
 
